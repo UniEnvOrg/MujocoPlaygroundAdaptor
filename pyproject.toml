@@ -1,0 +1,23 @@
+[project]
+name = "unienv_playground"
+version = "0.0.1a2"
+readme = "README.md"
+license = "MIT"
+requires-python = ">= 3.10"
+dependencies = [
+    "unienv",
+    "playground",
+]
+
+[project.optional-dependencies]
+
+[project.urls]
+Homepage = "https://github.com/UniEnvOrg/MujocoPlaygroundAdaptor"
+Documentation = "https://github.com/UniEnvOrg/MujocoPlaygroundAdaptor"
+Repository = "https://github.com/UniEnvOrg/MujocoPlaygroundAdaptor"
+Issues = "https://github.com/UniEnvOrg/MujocoPlaygroundAdaptor/issues"
+Changelog = "https://github.com/UniEnvOrg/MujocoPlaygroundAdaptor/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["*"]
+exclude = ["training*", "tests*"]
