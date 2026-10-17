@@ -34,3 +34,20 @@ def test_action_space_is_normalized():
     assert np.all(np.abs(np.asarray(action)) <= 1.0)
     assert jnp.full((4, single_env.action_size), 2.0) not in env.action_space
     env.close()
+
+
+def test_vision_observation_space():
+    # In playground >= 0.2 the unbatched `observation_size` of a vision env has
+    # a leading `nworld` axis; each (vmapped) environment observes one image.
+    from mujoco_playground import registry
+    from unienv_playground import FromMJXPlaygroundEnv
+
+    try:
+        mjxenv = registry.load(
+            "CartpoleBalance",
+            config_overrides={"vision": True, "vision_config.nworld": 4},
+        )
+    except Exception as e:  # needs the MJX-Warp render context
+        pytest.skip(f"vision CartpoleBalance unavailable: {e!r}")
+    env = FromMJXPlaygroundEnv(mjxenv, 4, None, jit=True)
+    assert env.observation_space["pixels/view_0"].shape == (4, 64, 64, 3)

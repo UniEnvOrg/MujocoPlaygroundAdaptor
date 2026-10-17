@@ -60,6 +60,24 @@ def wrap_mjx_env(
         env = brax_training.VmapWrapper(env)
     return env
 
+def single_observation_size(
+    env : Wrapper,
+    batch_size : int,
+) -> AxisMapSingleT:
+    """The per-environment observation sizes of the batched (wrapped) ``env``.
+
+    Same format as ``MjxEnv.observation_size`` (an ``int`` for a flat vector, else
+    a mapping of shapes), but read from the batched reset: ``observation_size``
+    traces the unbatched reset, in which the vision envs of playground >= 0.2
+    render all ``vision_config.nworld`` worlds at once (``(nworld, H, W, C)``),
+    while under vmap every environment gets its own ``(H, W, C)`` image.
+    """
+    rng = jax.random.split(jax.random.PRNGKey(0), batch_size)
+    obs = jax.eval_shape(env.reset, rng).obs
+    if isinstance(obs, Mapping):
+        return jax.tree.map(lambda x: tuple(x.shape[1:]), obs)
+    return obs.shape[-1] if len(obs.shape) == 2 else tuple(obs.shape[1:])
+
 def space_from_size(
     size : AxisMapSingleT,
     device : Optional[JaxDeviceType] = None,
@@ -148,7 +166,7 @@ class FromMJXPlaygroundEnv(
         )
         self.observation_space = sbu.batch_space(
             space_from_size(
-                single_env.observation_size,
+                single_observation_size(self.env, batch_size),
                 device=self.device
             ),
             batch_size
