@@ -3,10 +3,10 @@ name = "unienv_playground"
 version = "0.0.1a2"
 readme = "README.md"
 license = "MIT"
-requires-python = ">= 3.10"
+requires-python = ">= 3.11"
 dependencies = [
     "unienv>=0.0.1b16",
-    "playground",
+    "playground>=0.2",
 ]
 
 [project.optional-dependencies]

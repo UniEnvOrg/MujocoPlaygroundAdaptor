@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Require `playground>=0.2` and Python 3.11+: playground 0.2 needs Python 3.11, and the playground 0.1 that pip falls back to on Python 3.10 is incompatible with current MuJoCo MJX (`make_data()` no longer accepts `nconmax`).
 - Describe the observation and action spaces with unienv space metadata (requires `unienv>=0.0.1b16`): `proprio` flat / `state` observations, `privileged` `privileged_state`, image metadata for `pixels/view_<i>` (`HWC`, camera `source`, `fps` = 1 / ctrl_dt; the vision cartpole's stacked grayscale frames are not labelled `rgb`), and `normalized` actions with actuator `names`, `control`, `action_scale` and, for dm_control_suite envs, the actuator `range`.
 - Fix the observation space of vision envs on playground 0.2: `observation_size` traces the unbatched reset, which renders all `vision_config.nworld` worlds at once, so `pixels/view_<i>` got an extra `nworld` axis; the per-environment shapes are now read from the batched reset.
 - Fix the action space bounds: Playground actions are normalized to `[-1, 1]` (dm_control_suite envs send them to actuators with ctrlrange `[-1, 1]`, locomotion / manipulation envs scale them by `action_scale`), but the space was declared unbounded, so `sample_action()` produced out-of-range actions.
