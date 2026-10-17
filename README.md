@@ -40,3 +40,7 @@ while True:
     if jnp.any(terminated) or jnp.any(truncated):
         break
 ```
+
+## Spaces
+
+Actions are normalized to `[-1, 1]` (Playground's convention: dm_control_suite envs send them to actuators with ctrlrange `[-1, 1]`, locomotion and manipulation envs scale them by the config's `action_scale`). The spaces carry unienv space metadata: flat observations and `state` are `proprio`, `privileged_state` is `privileged`, `pixels/view_<i>` are `HWC` images at the control rate, and the action space records `normalized`, the actuator `names`, what the actuators control and the `action_scale`.

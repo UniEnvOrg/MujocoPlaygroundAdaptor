@@ -9,6 +9,7 @@ from unienv_interface.backends import ComputeBackend, BArrayType, BDeviceType, B
 from unienv_interface.backends.numpy import NumpyComputeBackend
 from unienv_interface.backends.jax import JaxComputeBackend, JaxArrayType, JaxDeviceType, JaxDtypeType, JaxRNGType
 from unienv_interface.space.space_utils import batch_utils as sbu
+from unienv_interface.space.space_utils.metadata_utils import annotate
 from unienv_interface.wrapper import backend_compat
 
 import mujoco.mjx as mjx
@@ -21,6 +22,7 @@ except ImportError:
     # plain vmap wrapper; the Madrona batch renderer and its wrapper are gone.
     MadronaWrapper = None
 from brax.envs.wrappers import training as brax_training
+from .metadata import playground_action_metadata, playground_observation_metadata
 from flax import struct
 
 AxisMapSingleT = Union[Mapping[str, "AxisMapSingleT"], int, None]
@@ -160,14 +162,19 @@ class FromMJXPlaygroundEnv(
                 1.0,
                 shape=(single_env.action_size,),
                 dtype=jnp.float32,
-                device=self.device
+                device=self.device,
+                metadata=playground_action_metadata(single_env),
             ),
             batch_size
         )
+        observation_size = single_observation_size(self.env, batch_size)
         self.observation_space = sbu.batch_space(
-            space_from_size(
-                single_observation_size(self.env, batch_size),
-                device=self.device
+            annotate(
+                space_from_size(
+                    observation_size,
+                    device=self.device
+                ),
+                playground_observation_metadata(single_env, observation_size),
             ),
             batch_size
         )

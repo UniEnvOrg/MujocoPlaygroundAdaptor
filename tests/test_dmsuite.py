@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import numpy as np
 from utils import construct_env_from_name, perform_env_test
+from unienv_interface.space.space_utils.metadata_utils import validate_metadata
 import pytest
 
 @pytest.mark.parametrize("env_name", ["CartpoleBalance"])
@@ -51,3 +52,28 @@ def test_vision_observation_space():
         pytest.skip(f"vision CartpoleBalance unavailable: {e!r}")
     env = FromMJXPlaygroundEnv(mjxenv, 4, None, jit=True)
     assert env.observation_space["pixels/view_0"].shape == (4, 64, 64, 3)
+
+    validate_metadata(env.observation_space)
+    pixels_md = env.observation_space["pixels/view_0"].metadata
+    assert pixels_md["kind"] == "image"
+    assert pixels_md["layout"] == "HWC"
+    assert pixels_md["source"] == "fixed"
+    assert pixels_md["fps"] == pytest.approx(1.0 / mjxenv.dt)
+    # three stacked grayscale frames, not an RGB image
+    assert "format" not in pixels_md and pixels_md["frame_stack"] == 3
+
+
+def test_space_metadata():
+    env = construct_env_from_name("CartpoleBalance", 4, True, seed=0)
+    validate_metadata(env.observation_space)
+    validate_metadata(env.action_space)
+
+    assert env.observation_space.metadata["kind"] == "proprio"
+    assert env.action_space.metadata == {
+        "kind": "action",
+        "control": "joint_torque",  # the slider is driven by a motor
+        "normalized": True,
+        "range": [[-1.0], [1.0]],  # the motor's ctrlrange
+        "names": ["slide"],
+    }
+    env.close()
