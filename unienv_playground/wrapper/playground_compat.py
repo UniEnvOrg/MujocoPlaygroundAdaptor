@@ -13,7 +13,13 @@ from unienv_interface.wrapper import backend_compat
 
 import mujoco.mjx as mjx
 from mujoco_playground import MjxEnv, State as MjxState
-from mujoco_playground._src.wrapper import Wrapper, MadronaWrapper, BraxDomainRandomizationVmapWrapper
+from mujoco_playground._src.wrapper import Wrapper, BraxDomainRandomizationVmapWrapper
+try:
+    from mujoco_playground._src.wrapper import MadronaWrapper
+except ImportError:
+    # playground >= 0.2 renders vision envs with MJX-Warp (`mjx.render`) under the
+    # plain vmap wrapper; the Madrona batch renderer and its wrapper are gone.
+    MadronaWrapper = None
 from brax.envs.wrappers import training as brax_training
 from flax import struct
 
@@ -46,7 +52,7 @@ def wrap_mjx_env(
         RandomizationFnT
     ] = None,
 ) -> Wrapper:
-    if is_vision:
+    if is_vision and MadronaWrapper is not None:
         env = MadronaWrapper(env, batch_size, randomization_fn)
     elif randomization_fn is not None:
         env = BraxDomainRandomizationVmapWrapper(env, randomization_fn)
@@ -188,6 +194,10 @@ class FromMJXPlaygroundEnv(
             def where_reset(
                 x,y
             ) -> bool:
+                if x.ndim == 0 or x.shape[0] != mask.shape[0]:
+                    # Not batched per environment (e.g. the empty placeholder arrays
+                    # of mjx.Data in playground >= 0.2); nothing to select.
+                    return y
                 mask_casted = jnp.reshape(mask, [mask.shape[0]] + [1]*(len(x.shape)-1))
                 return jnp.where(mask_casted, x, y)
             def pick_reset(x):
