@@ -131,9 +131,17 @@ class FromMJXPlaygroundEnv(
         self.batch_size = batch_size
         self.device = device
 
+        # Playground actions are normalized to [-1, 1]: dm_control_suite envs write
+        # them to actuators with ctrlrange [-1, 1], locomotion / manipulation envs
+        # scale them by the config's `action_scale` (and the RSL-RL wrapper of
+        # playground clips them to [-1, 1]).
         self.action_space = sbu.batch_space(
-            space_from_size(
-                single_env.action_size,
+            BoxSpace(
+                JaxComputeBackend,
+                -1.0,
+                1.0,
+                shape=(single_env.action_size,),
+                dtype=jnp.float32,
                 device=self.device
             ),
             batch_size
